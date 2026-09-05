@@ -1,0 +1,206 @@
+@import "tailwindcss";
+
+/* ========================================================================== */
+/*  VOYAGE — design tokens                                                    */
+/*  Palette « bleu profond / sable » : chaleureuse, haut de gamme, lisible.   */
+/* ========================================================================== */
+
+@theme {
+  --color-sand-50: oklch(0.985 0.006 85);
+  --color-sand-100: oklch(0.967 0.012 84);
+  --color-sand-200: oklch(0.929 0.021 83);
+  --color-sand-300: oklch(0.871 0.032 80);
+
+  --color-ink-50: oklch(0.97 0.006 250);
+  --color-ink-100: oklch(0.93 0.011 250);
+  --color-ink-200: oklch(0.86 0.016 250);
+  --color-ink-300: oklch(0.72 0.022 250);
+  --color-ink-400: oklch(0.58 0.028 252);
+  --color-ink-500: oklch(0.46 0.034 253);
+  --color-ink-600: oklch(0.37 0.038 254);
+  --color-ink-700: oklch(0.29 0.04 255);
+  --color-ink-800: oklch(0.22 0.038 256);
+  --color-ink-900: oklch(0.16 0.032 257);
+  --color-ink-950: oklch(0.11 0.026 258);
+
+  --color-lagoon-50: oklch(0.972 0.021 200);
+  --color-lagoon-100: oklch(0.94 0.043 199);
+  --color-lagoon-200: oklch(0.885 0.077 198);
+  --color-lagoon-300: oklch(0.81 0.107 205);
+  --color-lagoon-400: oklch(0.735 0.121 213);
+  --color-lagoon-500: oklch(0.668 0.128 226);
+  --color-lagoon-600: oklch(0.578 0.126 237);
+  --color-lagoon-700: oklch(0.492 0.114 243);
+  --color-lagoon-800: oklch(0.42 0.094 245);
+  --color-lagoon-900: oklch(0.36 0.076 247);
+
+  --color-coral-100: oklch(0.93 0.05 45);
+  --color-coral-400: oklch(0.75 0.15 43);
+  --color-coral-500: oklch(0.69 0.176 39);
+  --color-coral-600: oklch(0.61 0.176 35);
+
+  /* Pile système : aucun téléchargement de police, rendu immédiat. */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", "Noto Sans", Arial, sans-serif;
+
+  --radius-4xl: 2rem;
+
+  --shadow-soft: 0 1px 2px oklch(0.16 0.032 257 / 0.04),
+    0 8px 24px -12px oklch(0.16 0.032 257 / 0.14);
+  --shadow-lift: 0 2px 4px oklch(0.16 0.032 257 / 0.05),
+    0 18px 40px -18px oklch(0.16 0.032 257 / 0.24);
+  --shadow-panel: 0 24px 60px -28px oklch(0.16 0.032 257 / 0.35);
+}
+
+:root {
+  --background: oklch(0.995 0.003 90);
+  --foreground: var(--color-ink-900);
+  --muted: var(--color-sand-100);
+  --muted-foreground: var(--color-ink-400);
+  --border: oklch(0.91 0.008 250);
+  --card: oklch(1 0 0);
+  --ring: var(--color-lagoon-500);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: var(--color-lagoon-200);
+    color: var(--color-ink-900);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  /* Masque la scrollbar des carrousels horizontaux. */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .glass {
+    background: oklch(1 0 0 / 0.72);
+    backdrop-filter: blur(16px) saturate(180%);
+  }
+
+  /* Dégradé de repli affiché derrière chaque photo (et si elle échoue). */
+  .photo-fallback {
+    background-image: linear-gradient(
+      135deg,
+      var(--color-lagoon-700) 0%,
+      var(--color-lagoon-400) 45%,
+      var(--color-coral-400) 100%
+    );
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Animations discrètes                                                       */
+/* -------------------------------------------------------------------------- */
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out both;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-sand-100);
+}
+
+.skeleton::after {
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    oklch(1 0 0 / 0.65),
+    transparent
+  );
+  animation: shimmer 1.6s infinite;
+  content: "";
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

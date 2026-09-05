@@ -1,4 +1,4 @@
-import type { FlightOffer, SearchCriteria } from "@/types";
+import type { FlightOffer } from "@/types";
 import { estimateTravel } from "@/lib/geo";
 import { seededRandom } from "@/lib/utils";
 import { seasonMultiplier } from "./hotelProvider";

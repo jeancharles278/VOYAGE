@@ -1,7 +1,6 @@
 import type { WeatherReport, WeatherSnapshot } from "@/types";
 import {
   FORECAST_HORIZON_DAYS,
-  climateForDate,
   climateSeries,
   deriveCondition,
   seaTemperatureForDate,

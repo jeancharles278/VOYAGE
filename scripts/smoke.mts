@@ -107,6 +107,18 @@ check("aller-retour URL : voyageurs", roundTrip.travelers.children === 1 && roun
 check("aller-retour URL : nuits", roundTrip.nights === criteria.nights, roundTrip.nights);
 check("aller-retour URL : filtres", roundTrip.amenities.join() === criteria.amenities.join() && roundTrip.minTemperature === 23);
 
+/* --------------------- Paramètres d'URL manquants ------------------------ */
+
+const bare = criteriaFromSearchParams(new URLSearchParams());
+const fallbackCriteria = defaultCriteria();
+check("URL vide : budget par défaut", bare.maxBudget === fallbackCriteria.maxBudget, bare.maxBudget);
+check("URL vide : voyageurs par défaut", bare.travelers.adults === fallbackCriteria.travelers.adults, bare.travelers);
+check("URL vide : nuits par défaut", bare.nights === fallbackCriteria.nights, bare.nights);
+check("URL partielle : les autres champs gardent leur défaut", (() => {
+  const partial = criteriaFromSearchParams(new URLSearchParams("origin=geneve&types=ski"));
+  return partial.maxBudget === fallbackCriteria.maxBudget && partial.travelers.adults === 2 && partial.stayTypes[0] === "ski";
+})());
+
 /* ------------------------------ Providers -------------------------------- */
 
 const target = outcome.recommendations[0]?.destination ?? destinations[0];

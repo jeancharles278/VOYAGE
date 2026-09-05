@@ -91,7 +91,12 @@ export function defaultCriteria(): SearchCriteria {
   };
 }
 
+/**
+ * `Number(null)` vaut 0 (et non NaN) : sans ce garde-fou, un paramètre
+ * absent produirait un budget de 0 € ou un seul adulte.
+ */
 function num(value: string | null, fallback: number): number {
+  if (value === null || value.trim() === "") return fallback;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
 }

@@ -122,7 +122,7 @@ function generateHotels(destination: Destination, criteria: SearchCriteria): Hot
 function buildRates(total: number, mealPlan: MealPlan, rand: () => number): HotelRate[] {
   return AGENCIES.map((agency, index) => {
     // Le tarif direct est souvent — mais pas toujours — le plus intéressant.
-    const spread = index === 3 ? -0.04 + rand() * 0.06 : -0.02 + rand() * 0.14;
+    const spread = index === 3 ? -0.06 + rand() * 0.14 : -0.03 + rand() * 0.16;
     return {
       agency,
       price: Math.round(total * (1 + spread)),
