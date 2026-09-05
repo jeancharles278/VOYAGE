@@ -36,10 +36,11 @@ mapping réels.
 | `npm run dev`       | Serveur de développement                                    |
 | `npm run build`     | Build de production                                         |
 | `npm run start`     | Serveur de production                                       |
-| `npm run lint`      | ESLint 9 (flat config)                                      |
-| `npm run typecheck` | `tsc --noEmit`                                              |
+| **`npm test`**      | **Tout vérifier** : types, lint, moteur et adaptateur Amadeus |
 | `npm run smoke`     | 41 contrôles du moteur, des providers et du parser, sans navigateur |
 | `npm run amadeus`   | 73 contrôles de l'adaptateur Amadeus et du cache, sans identifiants |
+| `npm run lint`      | ESLint 9 (flat config)                                      |
+| `npm run typecheck` | `tsc --noEmit`                                              |
 
 ## Stack
 
