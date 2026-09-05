@@ -7,12 +7,20 @@ import type { SearchCriteria } from "@/types";
 import { getDestinations } from "@/data/destinations";
 import { evaluateDestination } from "@/lib/recommendationEngine";
 import { criteriaToSearchParams } from "@/lib/searchCriteria";
+import { useEffectiveCriteria } from "@/hooks/useLastSearch";
 import { useCompare, MAX_COMPARE } from "@/hooks/useCompare";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ComparisonTable } from "@/components/ComparisonTable";
 
-export function CompareClient({ criteria }: { criteria: SearchCriteria }) {
+export function CompareClient({
+  criteria: criteriaFromUrl,
+  urlHasCriteria,
+}: {
+  criteria: SearchCriteria;
+  urlHasCriteria: boolean;
+}) {
+  const { criteria } = useEffectiveCriteria(criteriaFromUrl, urlHasCriteria);
   const { selection, hydrated } = useCompare();
 
   const recommendations = useMemo(
@@ -32,8 +40,9 @@ export function CompareClient({ criteria }: { criteria: SearchCriteria }) {
           Comparateur
         </h1>
         <p className="mt-1.5 text-ink-500">
-          Jusqu&apos;à {MAX_COMPARE} destinations côte à côte, évaluées avec vos critères
-          de recherche. La meilleure valeur de chaque ligne est mise en évidence.
+          Jusqu&apos;à {MAX_COMPARE} destinations côte à côte, évaluées avec les critères
+          de votre dernière recherche. La meilleure valeur de chaque ligne est mise en
+          évidence.
         </p>
       </header>
 

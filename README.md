@@ -91,6 +91,7 @@ data/
 hooks/
 ├── useCompare.ts
 ├── useFavorites.ts
+├── useLastSearch.ts            Mémorise la dernière recherche
 └── useLocalStorage.ts
 
 lib/
@@ -123,6 +124,9 @@ types/index.ts                  Contrats partagés
 - **L'URL est la source de vérité.** `criteriaFromSearchParams()` et
   `criteriaToSearchParams()` rendent chaque recherche partageable et
   rechargeable. La page `/search` est rendue côté serveur.
+- **La dernière recherche est mémorisée.** Les pages Favoris et Comparateur
+  recalculent les scores avec les critères réellement utilisés
+  (`hooks/useLastSearch.ts`), pas avec les valeurs par défaut.
 - **Les providers sont interchangeables.** Passer du mock à une vraie API ne
   change qu'une fonction `getXProvider()`, jamais un composant.
 

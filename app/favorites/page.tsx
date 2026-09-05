@@ -14,6 +14,8 @@ export default async function FavoritesPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const criteria = criteriaFromSearchParams(await searchParams);
-  return <FavoritesClient criteria={criteria} />;
+  const params = await searchParams;
+  const criteria = criteriaFromSearchParams(params);
+  // Sans critères dans l'URL, le client réutilisera la dernière recherche.
+  return <FavoritesClient criteria={criteria} urlHasCriteria={Object.keys(params).length > 0} />;
 }

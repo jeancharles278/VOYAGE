@@ -15,6 +15,8 @@ export default async function ComparePage({
 }: {
   searchParams: SearchParams;
 }) {
-  const criteria = criteriaFromSearchParams(await searchParams);
-  return <CompareClient criteria={criteria} />;
+  const params = await searchParams;
+  const criteria = criteriaFromSearchParams(params);
+  // Sans critères dans l'URL, le client réutilisera la dernière recherche.
+  return <CompareClient criteria={criteria} urlHasCriteria={Object.keys(params).length > 0} />;
 }

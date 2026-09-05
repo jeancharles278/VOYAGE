@@ -7,12 +7,20 @@ import type { SearchCriteria } from "@/types";
 import { getDestination } from "@/data/destinations";
 import { evaluateDestination } from "@/lib/recommendationEngine";
 import { criteriaToSearchParams } from "@/lib/searchCriteria";
+import { useEffectiveCriteria } from "@/hooks/useLastSearch";
 import { useFavorites } from "@/hooks/useFavorites";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DestinationCard } from "@/components/DestinationCard";
 
-export function FavoritesClient({ criteria }: { criteria: SearchCriteria }) {
+export function FavoritesClient({
+  criteria: criteriaFromUrl,
+  urlHasCriteria,
+}: {
+  criteria: SearchCriteria;
+  urlHasCriteria: boolean;
+}) {
+  const { criteria } = useEffectiveCriteria(criteriaFromUrl, urlHasCriteria);
   const { favorites, remove, clear, hydrated } = useFavorites();
 
   const destinationFavorites = useMemo(
@@ -36,8 +44,8 @@ export function FavoritesClient({ criteria }: { criteria: SearchCriteria }) {
             Mes favoris
           </h1>
           <p className="mt-1.5 text-ink-500">
-            Enregistrés sur cet appareil. Les scores sont recalculés avec vos critères
-            actuels.
+            Enregistrés sur cet appareil. Les scores sont recalculés avec les critères
+            de votre dernière recherche.
           </p>
         </div>
         {hydrated && favorites.length > 0 && (

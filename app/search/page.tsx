@@ -18,6 +18,7 @@ import { DestinationCard, DestinationCardSkeleton } from "@/components/Destinati
 import { FiltersPanel, MobileFilters } from "@/components/FiltersPanel";
 import { SearchBar } from "@/components/SearchBar";
 import { SortSelect, type SortKey } from "@/components/SortSelect";
+import { SearchMemory } from "@/hooks/useLastSearch";
 
 export const metadata: Metadata = {
   title: "Résultats de recherche",
@@ -66,6 +67,8 @@ export default async function SearchPage({
 
   return (
     <div className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+      <SearchMemory query={query} />
+
       {/* ---------------------- Barre de recherche collante ---------------- */}
       <div className="sticky top-16 z-30 -mx-4 bg-[var(--background)]/85 px-4 py-4 backdrop-blur-lg sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <SearchBar initialCriteria={criteria} variant="compact" />
