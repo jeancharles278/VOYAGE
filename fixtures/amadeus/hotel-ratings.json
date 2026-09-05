@@ -1,0 +1,41 @@
+{
+  "data": [
+    {
+      "type": "hotelSentiment",
+      "hotelId": "MCPMIMAR",
+      "overallRating": 87,
+      "numberOfReviews": 1462,
+      "numberOfRatings": 1462,
+      "sentiments": {
+        "sleepQuality": 88,
+        "service": 90,
+        "facilities": 84,
+        "roomComforts": 87,
+        "valueForMoney": 79,
+        "catering": 85,
+        "location": 93,
+        "pointsOfInterest": 91,
+        "staff": 92
+      }
+    },
+    {
+      "type": "hotelSentiment",
+      "hotelId": "IBPMIPLA",
+      "overallRating": 91,
+      "numberOfReviews": 3218,
+      "numberOfRatings": 3218,
+      "sentiments": {
+        "sleepQuality": 90,
+        "service": 92,
+        "facilities": 94,
+        "roomComforts": 89,
+        "valueForMoney": 88,
+        "catering": 90,
+        "location": 95,
+        "pointsOfInterest": 87,
+        "staff": 93
+      }
+    }
+  ],
+  "meta": { "count": 2 }
+}

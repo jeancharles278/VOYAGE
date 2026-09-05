@@ -1,6 +1,7 @@
 import type { FlightOffer } from "@/types";
 import { estimateTravel } from "@/lib/geo";
 import { seededRandom } from "@/lib/utils";
+import { withAmadeusFlights } from "./amadeus";
 import { seasonMultiplier } from "./hotelProvider";
 import type { FlightProvider, FlightQuery } from "./types";
 
@@ -102,7 +103,14 @@ export const mockFlightProvider: FlightProvider = {
   },
 };
 
-/** Point d'ancrage pour Amadeus Flight Offers Search / Kiwi / Duffel. */
+/**
+ * Provider actif. Amadeus prend le relais dès que `AMADEUS_CLIENT_ID` et
+ * `AMADEUS_CLIENT_SECRET` sont définis (ou `AMADEUS_MODE=fixtures` pour
+ * rejouer des réponses enregistrées) ; sinon le jeu simulé est servi.
+ *
+ * Le provider Amadeus reçoit le jeu simulé en repli : une panne d'API ou une
+ * réponse vide renvoie une estimation plutôt qu'une page vide.
+ */
 export function getFlightProvider(): FlightProvider {
-  return mockFlightProvider;
+  return withAmadeusFlights(mockFlightProvider);
 }

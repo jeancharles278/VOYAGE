@@ -20,6 +20,17 @@ L'application est disponible sur <http://localhost:3000>. **Aucune clé d'API
 n'est requise** : tous les providers basculent automatiquement en mode simulé
 et la carte utilise les tuiles OpenStreetMap.
 
+Pour voir le chemin de code Amadeus s'exécuter sans identifiants :
+
+```bash
+AMADEUS_MODE=fixtures npm run dev
+```
+
+La fiche destination affiche alors de vrais vols Luxair / Lufthansa / Vueling
+et de vrais hôtels Melia / Iberostar, issus des réponses enregistrées dans
+`fixtures/amadeus/` — en passant par l'authentification, le cache et le
+mapping réels.
+
 | Commande            | Rôle                                                        |
 | ------------------- | ----------------------------------------------------------- |
 | `npm run dev`       | Serveur de développement                                    |
@@ -28,6 +39,7 @@ et la carte utilise les tuiles OpenStreetMap.
 | `npm run lint`      | ESLint 9 (flat config)                                      |
 | `npm run typecheck` | `tsc --noEmit`                                              |
 | `npm run smoke`     | 41 contrôles du moteur, des providers et du parser, sans navigateur |
+| `npm run amadeus`   | 73 contrôles de l'adaptateur Amadeus et du cache, sans identifiants |
 
 ## Stack
 
@@ -96,6 +108,14 @@ hooks/
 
 lib/
 ├── providers/
+│   ├── amadeus/                Adaptateur Amadeus (vols + hôtels)
+│   │   ├── apiTypes.ts         Formes de réponse de l'API
+│   │   ├── client.ts           OAuth2, limitation de débit, reprise
+│   │   ├── fixtureTransport.ts Rejoue les réponses enregistrées
+│   │   ├── flights.ts          Flight Offers Search
+│   │   ├── hotels.ts           Hotel List + Hotel Offers + e-réputation
+│   │   ├── mappers.ts          Conversion vers les contrats de l'app
+│   │   └── index.ts
 │   ├── destinationProvider.ts  Catalogue de destinations
 │   ├── flightProvider.ts       Transport (vol, train, voiture)
 │   ├── hotelProvider.ts        Hôtels et comparateur d'agences
@@ -103,6 +123,7 @@ lib/
 │   ├── weatherProvider.ts      Mock + OpenWeatherMap + WeatherAPI
 │   ├── types.ts                Interfaces communes
 │   └── index.ts
+├── cache.ts                    Cache TTL + déduplication des appels en vol
 ├── climate.ts                  Normales mensuelles → météo d'une période
 ├── geo.ts                      Haversine et estimation de trajet
 ├── mapStyle.ts                 Fond de carte OSM ou Mapbox
@@ -112,7 +133,10 @@ lib/
 ├── supabase.ts                 Client optionnel
 └── utils.ts                    cn, formatage, aléatoire déterministe
 
-scripts/smoke.mts               Vérification de bout en bout
+fixtures/amadeus/               Réponses Amadeus enregistrées
+scripts/
+├── amadeus.mts                 Contrôles de l'adaptateur et du cache
+└── smoke.mts                   Vérification de bout en bout
 types/index.ts                  Contrats partagés
 ```
 
@@ -138,8 +162,9 @@ types/index.ts                  Contrats partagés
 | ------------- | ----------------------------------------------- | ------------------------------------------------------- | ------------------------------------- |
 | Météo         | OpenWeatherMap, WeatherAPI                      | `lib/providers/weatherProvider.ts` — `getWeatherProvider()` | **Déjà implémenté**, s'active avec une clé |
 | Météo long terme | Meteomatics (climatologie)                   | même fichier, nouveau provider                          | À écrire                              |
-| Vols          | Amadeus *Flight Offers Search*, Duffel, Kiwi    | `lib/providers/flightProvider.ts` — `getFlightProvider()` | Simulé                                |
-| Hôtels        | Amadeus *Hotel Search*, Booking Demand API, RapidAPI Hotels | `lib/providers/hotelProvider.ts` — `getHotelProvider()` | Simulé                                |
+| Vols          | Amadeus *Flight Offers Search*                  | `lib/providers/amadeus/flights.ts`                      | **Déjà implémenté**, s'active avec les identifiants |
+| Hôtels        | Amadeus *Hotel Search* + *Hotel Sentiments*     | `lib/providers/amadeus/hotels.ts`                       | **Déjà implémenté**, s'active avec les identifiants |
+| Comparatif multi-agences | Metasearch ou agrégation de plusieurs fournisseurs | `HotelRate` dans `types/index.ts`         | Simulé — voir la limite ci-dessous    |
 | Locations     | Vrdo/Airbnb via RapidAPI, Holidu                | `lib/providers/rentalProvider.ts` — `getRentalProvider()` | Simulé                                |
 | Cartographie  | Mapbox (raster ou vector)                       | `lib/mapStyle.ts` — `getMapStyle()`                     | **Déjà implémenté**, OSM par défaut   |
 | Photos        | Unsplash API, Pexels, ou CDN propriétaire       | champ `image` dans `data/destinations.ts` + `next.config.ts` | Images de démonstration (picsum)      |
@@ -153,6 +178,67 @@ contrat commun `TravelOffer`. Le branchement d'une vraie API consiste à :
 2. le retourner depuis `getXProvider()` quand la clé est présente ;
 3. conserver le repli sur le mock en cas d'erreur, comme le fait déjà
    `createOpenWeatherMapProvider()`.
+
+### Brancher Amadeus
+
+1. Créer un compte sur [developers.amadeus.com](https://developers.amadeus.com)
+   et une application (l'environnement `test` est gratuit).
+2. Renseigner `AMADEUS_CLIENT_ID` et `AMADEUS_CLIENT_SECRET` dans `.env.local`.
+3. Redémarrer : `getFlightProvider()` et `getHotelProvider()` basculent seuls.
+
+Aucun autre changement n'est nécessaire — mais lisez d'abord les limites
+ci-dessous, elles sont réelles.
+
+#### Ce qu'Amadeus ne fournit pas
+
+| Attendu par l'interface     | Réalité de l'API                                  | Comportement retenu                                        |
+| --------------------------- | ------------------------------------------------- | ---------------------------------------------------------- |
+| Comparatif Booking / Expedia / Agoda | Amadeus est **un seul fournisseur**       | Le tableau n'affiche qu'une colonne, et le badge « Meilleur prix » disparaît. Un vrai comparatif exige plusieurs sources ou une API de métarecherche. |
+| Classement en étoiles       | Absent de *Hotel Offers*                          | `stars: null` → « Classement non communiqué ». Le filtre « 3★ minimum » n'exclut jamais un hôtel au classement inconnu. |
+| Équipements (piscine, spa…) | Aucun champ structuré                             | Déduits de la description de chambre par mots-clés (`inferAmenities`). Conservateur : un équipement non mentionné est considéré absent. |
+| Photos                      | Aucune                                            | Image de démonstration. Nécessite un fournisseur d'images. |
+| Note voyageurs              | API séparée *Hotel Sentiments*                    | Appelée en parallèle ; son échec n'empêche pas l'affichage. |
+| Train et voiture            | Aérien uniquement                                 | Ces modes restent servis par l'estimation.                 |
+
+#### La limite importante : la page de recherche
+
+`searchDestinations()` évalue **35 destinations par recherche**, de façon
+synchrone. Brancher Amadeus dessus signifierait 35 appels facturés et
+plusieurs secondes de latence par recherche — ce n'est pas viable.
+
+L'adaptateur alimente donc **la fiche destination** (une destination, un
+appel), tandis que la recherche continue d'utiliser le modèle d'estimation
+de `lib/geo.ts` et `estimateTransportCost()`. C'est aussi la bonne
+séquence : valider le mapping sur une destination avant d'élargir.
+
+Pour étendre la recherche aux prix réels, trois options, de la moins à la
+plus coûteuse :
+
+1. **Affiner le podium** — garder l'estimation pour classer, puis appeler
+   Amadeus sur les 3 à 5 premières destinations et recalculer leur budget.
+   Une poignée d'appels par recherche, cache compris.
+2. **Pré-calculer hors ligne** — un travail périodique qui alimente une
+   table de prix moyens par couple (origine, destination, mois). La
+   recherche reste instantanée et gratuite.
+3. **Tout en direct** — à réserver à une recherche avec destination imposée.
+
+Dans tous les cas, prévoir de **recalibrer `priceScore()`** : le score prix
+pèse 25 % du total et a été réglé sur les prix estimés.
+
+### Le cache (`lib/cache.ts`)
+
+- **TTL par domaine** : 20 min pour les vols, 30 min pour les offres
+  hôtelières, 24 h pour la liste des hôtels et les notes.
+- **Déduplication** : dix requêtes simultanées sur la même clé ne
+  déclenchent qu'un appel — vérifié par `npm run amadeus`.
+- **Les erreurs ne sont jamais mémorisées** : un échec est retenté.
+- **Store enfichable** : la mémoire du processus convient en local et sur
+  une instance unique. En production multi-instances, implémenter
+  `CacheStore` avec Redis — trois méthodes (`get`, `set`, `delete`).
+
+Le client Amadeus ajoute par-dessus : un jeton OAuth partagé et renouvelé
+avant expiration, une limitation de débit (10 req/s en environnement test)
+et une reprise exponentielle sur 429 et 5xx.
 
 ### Schéma Supabase suggéré
 
@@ -187,8 +273,10 @@ elles, l'application tourne en mode simulé.
 | `METEOMATICS_USERNAME` / `_PASSWORD` | Climatologie long terme (provider à écrire)            |
 | `NEXT_PUBLIC_MAPBOX_TOKEN`      | Bascule la carte de OpenStreetMap vers Mapbox                |
 | `NEXT_PUBLIC_MAP_PROVIDER`      | `osm` (défaut) ou `mapbox`                                   |
-| `HOTEL_PROVIDER` / `FLIGHT_PROVIDER` / `RENTAL_PROVIDER` | `mock` (défaut)                      |
-| `AMADEUS_CLIENT_ID` / `_SECRET` | Vols et hôtels Amadeus                                       |
+| `RENTAL_PROVIDER`               | `mock` (défaut)                                              |
+| `AMADEUS_MODE`                  | `off`, `fixtures` (réponses enregistrées) ou `live`          |
+| `AMADEUS_CLIENT_ID` / `_SECRET` | Vols et hôtels Amadeus — leur présence active le mode `live` |
+| `AMADEUS_ENVIRONMENT`           | `test` (bac à sable) ou `production`                         |
 | `BOOKING_API_KEY`, `RAPIDAPI_KEY` | Agrégateurs d'hébergement                                  |
 | `NEXT_PUBLIC_SUPABASE_URL`      | Projet Supabase                                              |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clé publique Supabase                                        |
@@ -206,10 +294,10 @@ sur des données générées plutôt que sur une API tierce.
 | Élément                                   | Fichier                             | Ce qui est simulé                                                                |
 | ----------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------- |
 | `mockWeatherProvider`                     | `lib/providers/weatherProvider.ts`  | Météo dérivée des normales mensuelles réelles, avec variabilité journalière       |
-| `mockHotelProvider` / `generateHotels()`  | `lib/providers/hotelProvider.ts`    | 10 établissements par destination : prix, notes, équipements, tarifs par agence   |
+| `mockHotelProvider` / `generateHotels()`  | `lib/providers/hotelProvider.ts`    | 10 établissements par destination — **remplacé par Amadeus** dès que les identifiants sont présents |
 | `buildRates()`                            | `lib/providers/hotelProvider.ts`    | Écarts de prix entre Booking, Expedia, Agoda et tarif direct                      |
 | `mockRentalProvider`                      | `lib/providers/rentalProvider.ts`   | 8 locations, surface et capacité                                                  |
-| `mockFlightProvider` / `estimateTransportCost()` | `lib/providers/flightProvider.ts` | Compagnies, horaires et prix ; le prix dérive du prix moyen et de la saison |
+| `mockFlightProvider` / `estimateTransportCost()` | `lib/providers/flightProvider.ts` | Compagnies, horaires et prix — **remplacé par Amadeus** dès que les identifiants sont présents |
 | `estimateTravel()`                        | `lib/geo.ts`                        | Durées calculées depuis la distance orthodromique, pas depuis un horaire réel     |
 | `buildPoi()`                              | `data/destinations.ts`              | Positions des hôtels, plages et restaurants (déterministes, à l'échelle réelle)   |
 | `parseWithLlm()`                          | `app/api/parse/route.ts`            | Retombe sur le parser à règles tant qu'aucune clé LLM n'est branchée              |
@@ -234,9 +322,10 @@ avec une note d'explication.
 
 1. **Brancher une vraie météo** (le plus rentable) : `OPENWEATHERMAP_API_KEY`
    suffit, le code est déjà écrit et testé.
-2. **Connecter Amadeus** pour les vols puis les hôtels — c'est ce qui
-   transforme le budget estimé en budget réservable. Prévoir un cache
-   (Redis ou `unstable_cache`) : ces APIs sont lentes et facturées à l'appel.
+2. **Activer Amadeus** : l'adaptateur, le cache et les tests sont écrits, il
+   ne manque que les identifiants. Commencer par la fiche destination, puis
+   choisir une stratégie pour la recherche (voir « La limite importante »).
+   Ensuite seulement, recalibrer `priceScore()` sur les prix réels.
 3. **Remplacer les photos de démonstration** par l'API Unsplash ou une
    banque d'images sous licence, et servir des `blurDataURL`.
 4. **Ajouter les comptes Supabase** pour synchroniser favoris et comparateur

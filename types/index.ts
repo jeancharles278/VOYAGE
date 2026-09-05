@@ -211,8 +211,12 @@ export interface TravelOffer {
 
 export interface HotelOffer extends TravelOffer {
   type: "hotel";
-  /** Classement hôtelier 1-5. */
-  stars: number;
+  /**
+   * Classement hôtelier 1-5, ou `null` lorsque le fournisseur ne le
+   * communique pas (c'est le cas d'Amadeus Hotel Search). Un classement
+   * inconnu n'est jamais présenté comme un classement bas.
+   */
+  stars: number | null;
   image: string;
   address: string;
   position: GeoPoint;

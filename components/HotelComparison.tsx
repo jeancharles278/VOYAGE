@@ -18,12 +18,14 @@ import { Button } from "@/components/ui/button";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { Photo } from "@/components/Photo";
 
-const AGENCIES = ["Booking", "Expedia", "Agoda", "Prix direct"] as const;
-
 interface HotelComparisonProps {
   hotels: HotelOffer[];
   criteria: SearchCriteria;
   destinationSlug: string;
+  /** Nom du fournisseur ayant servi ces offres. */
+  providerLabel: string;
+  /** `true` si les tarifs viennent d'une vraie API. */
+  providerLive: boolean;
 }
 
 type SortKey = "price" | "rating" | "distance";
@@ -33,9 +35,28 @@ type SortKey = "price" | "rating" | "distance";
  * Les tarifs sont simulés : `bestRate()` met en avant l'agence la moins
  * chère pour chaque établissement.
  */
-export function HotelComparison({ hotels, criteria, destinationSlug }: HotelComparisonProps) {
+export function HotelComparison({
+  hotels,
+  criteria,
+  destinationSlug,
+  providerLabel,
+  providerLive,
+}: HotelComparisonProps) {
   const [sort, setSort] = useState<SortKey>("price");
   const [visible, setVisible] = useState(5);
+
+  /**
+   * Colonnes de comparaison déduites des offres. Avec le jeu simulé on
+   * obtient Booking / Expedia / Agoda / Prix direct ; avec un fournisseur
+   * unique comme Amadeus, une seule colonne — sans colonnes vides.
+   */
+  const agencies = useMemo(() => {
+    const seen = new Set<string>();
+    for (const hotel of hotels) {
+      for (const rate of hotel.rates) seen.add(rate.agency);
+    }
+    return Array.from(seen);
+  }, [hotels]);
 
   const sorted = useMemo(() => {
     const copy = [...hotels];
@@ -61,6 +82,8 @@ export function HotelComparison({ hotels, criteria, destinationSlug }: HotelComp
     );
   }
 
+  const comparable = agencies.length > 1;
+
   return (
     <div className="grid gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -68,6 +91,9 @@ export function HotelComparison({ hotels, criteria, destinationSlug }: HotelComp
           {hotels.length} établissement{hotels.length > 1 ? "s" : ""} pour {criteria.nights}{" "}
           nuit{criteria.nights > 1 ? "s" : ""}, {criteria.travelers.adults + criteria.travelers.children}{" "}
           voyageur{criteria.travelers.adults + criteria.travelers.children > 1 ? "s" : ""}
+          <span className="ml-1.5 text-ink-300">
+            · {providerLive ? `tarifs ${providerLabel}` : "tarifs simulés"}
+          </span>
         </p>
         <div className="flex gap-1.5">
           {(
@@ -97,7 +123,13 @@ export function HotelComparison({ hotels, criteria, destinationSlug }: HotelComp
       {/* --------------------------- Vue mobile --------------------------- */}
       <div className="grid gap-3 lg:hidden">
         {sorted.slice(0, visible).map((hotel) => (
-          <HotelMobileCard key={hotel.id} hotel={hotel} destinationSlug={destinationSlug} />
+          <HotelMobileCard
+            key={hotel.id}
+            hotel={hotel}
+            agencies={agencies}
+            comparable={comparable}
+            destinationSlug={destinationSlug}
+          />
         ))}
       </div>
 
@@ -113,7 +145,7 @@ export function HotelComparison({ hotels, criteria, destinationSlug }: HotelComp
                 <Th className="text-center">Piscine</Th>
                 <Th className="text-center">Petit-déj.</Th>
                 <Th className="text-center">Annulation</Th>
-                {AGENCIES.map((agency) => (
+                {agencies.map((agency) => (
                   <Th key={agency} className="text-right">
                     {agency}
                   </Th>
@@ -139,9 +171,7 @@ export function HotelComparison({ hotels, criteria, destinationSlug }: HotelComp
                         <div className="min-w-0">
                           <p className="truncate font-medium text-ink-900">{hotel.name}</p>
                           <p className="flex items-center gap-0.5 text-xs text-amber-500">
-                            {Array.from({ length: hotel.stars }).map((_, index) => (
-                              <Star key={index} className="size-3 fill-current" />
-                            ))}
+                            <Stars value={hotel.stars} />
                             <span className="ml-1 text-ink-400">
                               {mealPlanLabels[hotel.mealPlan]}
                             </span>
@@ -169,7 +199,7 @@ export function HotelComparison({ hotels, criteria, destinationSlug }: HotelComp
                     <BoolCell value={hotel.amenities.includes("pool")} />
                     <BoolCell value={hotel.amenities.includes("breakfast")} />
                     <BoolCell value={hotel.freeCancellation} />
-                    {AGENCIES.map((agency) => {
+                    {agencies.map((agency) => {
                       const rate = hotel.rates.find((r) => r.agency === agency);
                       const isBest = rate?.price === best.price;
                       return (
@@ -178,18 +208,18 @@ export function HotelComparison({ hotels, criteria, destinationSlug }: HotelComp
                             <span
                               className={cn(
                                 "inline-flex flex-col items-end rounded-xl px-2 py-1.5",
-                                isBest && "bg-emerald-50",
+                                isBest && comparable && "bg-emerald-50",
                               )}
                             >
                               <span
                                 className={cn(
                                   "font-semibold tabular-nums",
-                                  isBest ? "text-emerald-700" : "text-ink-700",
+                                  isBest && comparable ? "text-emerald-700" : "text-ink-700",
                                 )}
                               >
                                 {formatPrice(rate.price)}
                               </span>
-                              {isBest && (
+                              {isBest && comparable && (
                                 <span className="flex items-center gap-1 whitespace-nowrap text-[10px] font-medium uppercase tracking-wide text-emerald-600">
                                   <BadgeCheck className="size-3" />
                                   Meilleur prix
@@ -225,6 +255,20 @@ export function HotelComparison({ hotels, criteria, destinationSlug }: HotelComp
 
 /* -------------------------------------------------------------------------- */
 
+/** Étoiles, ou mention explicite quand le fournisseur ne les communique pas. */
+function Stars({ value }: { value: number | null }) {
+  if (value === null) {
+    return <span className="text-ink-300">Classement non communiqué</span>;
+  }
+  return (
+    <>
+      {Array.from({ length: value }).map((_, index) => (
+        <Star key={index} className="size-3 fill-current" />
+      ))}
+    </>
+  );
+}
+
 function Th({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
     <th
@@ -252,9 +296,13 @@ function BoolCell({ value }: { value: boolean }) {
 
 function HotelMobileCard({
   hotel,
+  agencies,
+  comparable,
   destinationSlug,
 }: {
   hotel: HotelOffer;
+  agencies: string[];
+  comparable: boolean;
   destinationSlug: string;
 }) {
   const best = bestRate(hotel);
@@ -272,9 +320,7 @@ function HotelMobileCard({
             <div className="min-w-0">
               <p className="truncate text-[15px] font-medium text-ink-900">{hotel.name}</p>
               <p className="flex items-center gap-0.5 text-amber-500">
-                {Array.from({ length: hotel.stars }).map((_, index) => (
-                  <Star key={index} className="size-3 fill-current" />
-                ))}
+                <Stars value={hotel.stars} />
               </p>
             </div>
             <FavoriteButton
@@ -300,8 +346,11 @@ function HotelMobileCard({
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-px border-t border-ink-100 bg-ink-100">
-        {AGENCIES.map((agency) => {
+      <div
+        className="grid gap-px border-t border-ink-100 bg-ink-100"
+        style={{ gridTemplateColumns: `repeat(${Math.max(1, agencies.length)}, minmax(0, 1fr))` }}
+      >
+        {agencies.map((agency) => {
           const rate = hotel.rates.find((r) => r.agency === agency);
           const isBest = rate?.price === best.price;
           return (
@@ -309,7 +358,7 @@ function HotelMobileCard({
               key={agency}
               className={cn(
                 "flex flex-col items-center gap-0.5 px-1 py-2.5",
-                isBest ? "bg-emerald-50" : "bg-white",
+                isBest && comparable ? "bg-emerald-50" : "bg-white",
               )}
             >
               <span className="text-[10px] uppercase tracking-wide text-ink-400">
@@ -318,7 +367,7 @@ function HotelMobileCard({
               <span
                 className={cn(
                   "text-sm font-semibold tabular-nums",
-                  isBest ? "text-emerald-700" : "text-ink-700",
+                  isBest && comparable ? "text-emerald-700" : "text-ink-700",
                 )}
               >
                 {rate ? formatPrice(rate.price) : "—"}

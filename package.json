@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "smoke": "tsx scripts/smoke.mts"
+    "smoke": "tsx scripts/smoke.mts",
+    "amadeus": "tsx scripts/amadeus.mts"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.20",

@@ -7,6 +7,7 @@ import type {
   SearchCriteria,
 } from "@/types";
 import { seededRandom } from "@/lib/utils";
+import { withAmadeusHotels } from "./amadeus";
 import type { HotelProvider, HotelQuery } from "./types";
 
 const AGENCIES = ["Booking", "Expedia", "Agoda", "Prix direct"] as const;
@@ -178,7 +179,15 @@ export function seasonMultiplier(startDate?: string): number {
 export function filterHotels(offers: HotelOffer[], criteria: SearchCriteria): HotelOffer[] {
   return offers
     .filter((hotel) => {
-      if (criteria.minHotelRating && hotel.stars < criteria.minHotelRating) return false;
+      // Un classement inconnu ne permet pas d'exclure : on ne peut pas
+      // prouver que l'hôtel ne correspond pas au critère.
+      if (
+        criteria.minHotelRating &&
+        hotel.stars !== null &&
+        hotel.stars < criteria.minHotelRating
+      ) {
+        return false;
+      }
       if (
         criteria.maxBeachDistance !== null &&
         (hotel.distanceToBeach === null ||
@@ -206,15 +215,11 @@ export const mockHotelProvider: HotelProvider = {
 };
 
 /**
- * Point d'ancrage pour une intégration réelle (Amadeus Hotel Search,
- * Booking Demand API, RapidAPI Hotels...). Tant qu'aucune clé n'est
- * configurée, on sert le parc simulé.
+ * Provider actif. Amadeus prend le relais dès que ses identifiants sont
+ * présents (ou `AMADEUS_MODE=fixtures`) ; sinon le parc simulé est servi.
+ *
+ * Le provider Amadeus reçoit le parc simulé en repli.
  */
 export function getHotelProvider(): HotelProvider {
-  const configured = process.env.HOTEL_PROVIDER?.toLowerCase();
-  if (configured === "amadeus" && process.env.AMADEUS_CLIENT_ID) {
-    // TODO: brancher createAmadeusHotelProvider() — voir README.
-    return mockHotelProvider;
-  }
-  return mockHotelProvider;
+  return withAmadeusHotels(mockHotelProvider);
 }

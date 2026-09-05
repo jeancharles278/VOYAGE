@@ -1,0 +1,123 @@
+{
+  "data": [
+    {
+      "type": "hotel-offers",
+      "hotel": {
+        "type": "hotel",
+        "hotelId": "MCPMIMAR",
+        "chainCode": "MC",
+        "dupeId": "700019442",
+        "name": "MELIA PALMA MARINA",
+        "cityCode": "PMI",
+        "latitude": 39.5637,
+        "longitude": 2.6318
+      },
+      "available": true,
+      "offers": [
+        {
+          "id": "TSXQGD3FR8",
+          "checkInDate": "2027-07-11",
+          "checkOutDate": "2027-07-15",
+          "rateCode": "RAC",
+          "rateFamilyEstimated": { "code": "BAR", "type": "P" },
+          "room": {
+            "type": "ELE",
+            "typeEstimated": { "category": "DELUXE_ROOM", "beds": 1, "bedType": "KING" },
+            "description": { "text": "Deluxe Room Sea View\nBreakfast included\nOutdoor pool, air conditioning, free WiFi", "lang": "EN" }
+          },
+          "guests": { "adults": 2 },
+          "price": {
+            "currency": "EUR",
+            "base": "884.00",
+            "total": "972.40",
+            "variations": { "average": { "base": "221.00" } }
+          },
+          "policies": {
+            "cancellations": [{ "deadline": "2027-07-08T23:59:00", "amount": "0.00" }],
+            "paymentType": "guarantee"
+          },
+          "self": "https://test.api.amadeus.com/v3/shopping/hotel-offers/TSXQGD3FR8"
+        },
+        {
+          "id": "QW8ZP1LK2M",
+          "checkInDate": "2027-07-11",
+          "checkOutDate": "2027-07-15",
+          "rateCode": "NRF",
+          "rateFamilyEstimated": { "code": "PRO", "type": "P" },
+          "room": {
+            "type": "STD",
+            "typeEstimated": { "category": "STANDARD_ROOM", "beds": 2, "bedType": "TWIN" },
+            "description": { "text": "Standard Twin Room\nNon-refundable\nRoom only, air conditioning", "lang": "EN" }
+          },
+          "guests": { "adults": 2 },
+          "price": {
+            "currency": "EUR",
+            "base": "716.00",
+            "total": "787.60",
+            "variations": { "average": { "base": "179.00" } }
+          },
+          "policies": { "cancellations": [], "paymentType": "deposit" },
+          "self": "https://test.api.amadeus.com/v3/shopping/hotel-offers/QW8ZP1LK2M"
+        }
+      ],
+      "self": "https://test.api.amadeus.com/v3/shopping/hotel-offers?hotelIds=MCPMIMAR"
+    },
+    {
+      "type": "hotel-offers",
+      "hotel": {
+        "type": "hotel",
+        "hotelId": "IBPMIPLA",
+        "chainCode": "IB",
+        "dupeId": "700044109",
+        "name": "IBEROSTAR PLAYA DE PALMA",
+        "cityCode": "PMI",
+        "latitude": 39.5169,
+        "longitude": 2.7502
+      },
+      "available": true,
+      "offers": [
+        {
+          "id": "KD93MZ0QP4",
+          "checkInDate": "2027-07-11",
+          "checkOutDate": "2027-07-15",
+          "rateCode": "AI",
+          "rateFamilyEstimated": { "code": "BAR", "type": "P" },
+          "room": {
+            "type": "FAM",
+            "typeEstimated": { "category": "FAMILY_ROOM", "beds": 3, "bedType": "DOUBLE" },
+            "description": { "text": "Family Room\nAll inclusive\nTwo outdoor pools, kids club, spa, beachfront, parking", "lang": "EN" }
+          },
+          "guests": { "adults": 2 },
+          "price": {
+            "currency": "EUR",
+            "base": "1148.00",
+            "total": "1262.80",
+            "variations": { "average": { "base": "287.00" } }
+          },
+          "policies": {
+            "cancellations": [{ "deadline": "2027-07-04T23:59:00", "amount": "0.00" }],
+            "paymentType": "guarantee"
+          },
+          "self": "https://test.api.amadeus.com/v3/shopping/hotel-offers/KD93MZ0QP4"
+        }
+      ],
+      "self": "https://test.api.amadeus.com/v3/shopping/hotel-offers?hotelIds=IBPMIPLA"
+    },
+    {
+      "type": "hotel-offers",
+      "hotel": {
+        "type": "hotel",
+        "hotelId": "HIPMIBAY",
+        "chainCode": "HI",
+        "dupeId": "700031884",
+        "name": "HOTEL PALMA BAY CLUB RESORT",
+        "cityCode": "PMI",
+        "latitude": 39.5312,
+        "longitude": 2.7431
+      },
+      "available": false,
+      "offers": [],
+      "self": "https://test.api.amadeus.com/v3/shopping/hotel-offers?hotelIds=HIPMIBAY"
+    }
+  ]
+}

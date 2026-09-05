@@ -79,13 +79,14 @@ export default async function DestinationPage({
   const query = criteriaToSearchParams(criteria).toString();
 
   // Providers : simulés par défaut, réels dès qu'une clé est configurée.
+  const hotelProvider = getHotelProvider();
   const [weather, hotels, rentals, flights] = await Promise.all([
     getWeatherProvider().getReport({
       destination,
       startDate: criteria.startDate ?? todayISO(),
       nights: criteria.nights,
     }),
-    getHotelProvider().search({ destination, criteria }),
+    hotelProvider.search({ destination, criteria }),
     getRentalProvider().search({ destination, criteria }),
     origin
       ? getFlightProvider().search({ origin, destination, criteria })
@@ -244,7 +245,9 @@ export default async function DestinationPage({
             Où dormir à {destination.name}
           </h2>
           <p className="mt-1.5 text-sm text-ink-500">
-            Comparaison des tarifs entre agences pour vos dates. Les prix sont simulés.
+            {hotelProvider.live
+              ? `Tarifs fournis par ${hotelProvider.label} pour vos dates.`
+              : "Comparaison des tarifs entre agences pour vos dates. Les prix sont simulés."}
           </p>
 
           <Tabs defaultValue="hotels" className="mt-6">
@@ -264,6 +267,8 @@ export default async function DestinationPage({
                 hotels={matchingHotels}
                 criteria={criteria}
                 destinationSlug={destination.slug}
+                providerLabel={hotelProvider.label}
+                providerLive={hotelProvider.live}
               />
             </TabsContent>
 
